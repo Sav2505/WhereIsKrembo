@@ -8,7 +8,7 @@ import './App.css';
 
 type Screen = 'menu' | 'story' | 'help' | 'playing' | 'paused' | 'failed' | 'won';
 
-const emptyHud: HudState = { stage: 0, stamina: 100, hearts: 3, flashlight: true, distractions: 3, hidden: false, alert: false, prompt: '' };
+const emptyHud: HudState = { stage: 0, stamina: 100, hearts: 3, flashlight: true, distractions: 3, hidden: false, alert: false, dizzy: false, prompt: '' };
 
 function storageGet(key: string) {
   try { return localStorage.getItem(key); } catch { return null; }
@@ -177,7 +177,7 @@ export const App = () => {
           <div className="title-kicker">הסיפור עד כה</div>
           <h1 className="story-title">החתונה חיכתה.<br /><em>קרמבו לא.</em></h1>
           <p className="story-copy">המשפחה נסעה לחתונה ליד כפר סבא. קרמבו נשאר בבית בהשגחה, אבל היו לו תוכניות אחרות. עכשיו הוא מסתובב לבד במודיעין, ובחוץ יש צבועים רעבים.</p>
-          <p className="story-copy story-punch">אורי בדרך. הפנס עובד. בערך.</p>
+          <p className="story-copy story-punch">אורי שתה יין אדום למרות התרופות והאזהרה של הרופא. החלטה גרועה. עכשיו הוא בדרך ברגל, והפנס עובד. בערך.</p>
           <div className="title-actions"><button className="primary-button" onClick={() => start(0)}><Play size={19} fill="currentColor" /> יוצאים לחפש</button><button className="text-button" onClick={() => showHelp('story')}><HelpCircle size={19} /> איך משחקים?</button></div>
         </>}
       </div>
@@ -198,11 +198,11 @@ export const App = () => {
       </div>
     </section>}
 
-    {gameVisible && bridgeRef.current && <section className="game-layout" style={{ display: screen === 'help' ? 'none' : undefined }}>
+    {gameVisible && bridgeRef.current && <section className="game-layout" style={screen === 'help' ? { position: 'fixed', left: '-10000px', top: 0, width: '100%', visibility: 'hidden' } : undefined}>
       <div className="game-heading"><div><div className="small-label">מבצע חילוץ לילי <span>/</span> {objective.area}</div><h2>{objective.title}</h2></div><div className="chapter"><MapPin size={16} /> {objective.area} <span>0{Math.min(hud.stage + 1, 4)} / 04</span></div></div>
       <div className="game-frame">
         <GameView key={session} bridge={bridgeRef.current} paused={screen !== 'playing'} />
-        <div className="game-top-overlay"><div className="area-label"><span className="status-dot" /> {objective.area}</div>{hud.alert && <div className="alert-label">צבוע בעקבותיך!</div>}{hud.hidden && !hud.alert && <div className="hidden-label">מסתתר בשיחים</div>}</div>
+        <div className="game-top-overlay"><div className="area-label"><span className="status-dot" /> {objective.area}</div>{hud.alert && <div className="alert-label">צבוע בעקבותיך!</div>}{hud.hidden && !hud.alert && <div className="hidden-label">מסתתר בשיחים</div>}{hud.dizzy && !hud.alert && <div className="dizzy-label">אורי קצת מסוחרר</div>}</div>
         {dialogue.text && <div className="dialogue" role="status"><span>{dialogue.speaker}</span><p>{dialogue.text}</p></div>}
         {hud.prompt && screen === 'playing' && <div className="interaction-prompt"><kbd>E</kbd> {hud.prompt}</div>}
         {screen === 'playing' && <TouchControls input={bridgeRef.current.input} />}

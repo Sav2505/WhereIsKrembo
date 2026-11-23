@@ -13,6 +13,7 @@ export interface HudState {
   distractions: number;
   hidden: boolean;
   alert: boolean;
+  dizzy: boolean;
   prompt: string;
 }
 

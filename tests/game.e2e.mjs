@@ -22,11 +22,17 @@ try {
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.getByRole('button', { name: 'התחל משחק' }).click();
+  await expect(page.getByText('אורי שתה יין אדום', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'יוצאים לחפש' }).click();
   await expect(page.locator('canvas')).toBeVisible();
+  await expect(page.getByText('אורי קצת מסוחרר')).toBeVisible();
   await page.waitForTimeout(600);
   await page.keyboard.down('d');
-  await page.waitForTimeout(1500);
+  await page.waitForFunction(() => {
+    const host = document.querySelector('.game-canvas');
+    const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
+    return host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue').player.x >= 290;
+  }, null, { timeout: 20000 });
   await page.keyboard.up('d');
   await page.keyboard.press('e');
   await expect(page.locator('.game-heading h2')).toHaveText('דברו עם השכנה');
@@ -41,6 +47,11 @@ try {
   await expect(page.getByText('המשחק בהשהיה')).toBeVisible();
   await page.getByRole('button', { name: 'ממשיכים' }).click();
   await expect(page.locator('.game-heading h2')).toHaveText('דברו עם השכנה');
+  console.log('Scene after help:', await page.locator('.game-canvas').evaluate((host) => {
+    const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
+    const game = host[key].return.memoizedState.next.memoizedState.current;
+    return { status: game.scene.getScene('rescue').sys.settings.status, size: [game.scale.width, game.scale.height] };
+  }));
 
   for (const [x, y, next] of [[730, 310, 'מצאו את הצעצוע של קרמבו'], [1430, 440, 'בדקו את שקית החטיפים'], [2360, 460, 'מצאו את קרמבו'], [3200, 330, 'לוו את קרמבו הביתה']]) {
     await moveScene(x, y);

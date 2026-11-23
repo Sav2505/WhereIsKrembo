@@ -48,6 +48,7 @@ export class RescueScene extends Phaser.Scene {
   private barkAt = 0;
   private lastWarning = 0;
   private finished = false;
+  private dizzyRemaining = 0;
 
   constructor(bridge: GameBridge) {
     super('rescue');
@@ -62,6 +63,7 @@ export class RescueScene extends Phaser.Scene {
     this.obstacles = this.physics.add.staticGroup();
     this.makeScenery();
     this.stage = this.bridge.startStage;
+    this.dizzyRemaining = this.stage === 0 ? 14000 : 0;
     const spawn = this.stage === 0 ? { x: 140, y: 450 } : { x: TARGETS[this.stage - 1].x + 45, y: TARGETS[this.stage - 1].y };
     this.player = this.physics.add.sprite(spawn.x, spawn.y, 'uri').setDepth(10).setCollideWorldBounds(true);
     this.player.body!.setSize(25, 22).setOffset(11, 34);
@@ -80,7 +82,10 @@ export class RescueScene extends Phaser.Scene {
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
     this.cameras.main.setBackgroundColor('#203b49');
     this.showTarget();
-    this.bridge.onDialogue('אורי', this.stage ? 'אוקיי, חזרנו לתוכנית. קרמבו, אני בדרך!' : 'קרמבו?! איפה אתה?! רק שלא אצטרך להסביר את זה בבית...');
+    this.bridge.onDialogue('אורי', this.stage ? 'אוקיי, חזרנו לתוכנית. קרמבו, אני בדרך!' : 'קרמבו?! איפה אתה?! היין האדום והתרופות היו רעיון גרוע...');
+    if (this.stage === 0) {
+      this.time.delayedCall(5000, () => this.bridge.onDialogue('אורי', 'הרופא אמר בלי יין. השכנה אמרה ימינה. נדמה לי שהשיח אמר שמאלה.'));
+    }
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.audio.destroy());
   }
 
@@ -198,11 +203,13 @@ export class RescueScene extends Phaser.Scene {
     const y = Number(input.held.has('arrowdown') || input.held.has('s')) - Number(input.held.has('arrowup') || input.held.has('w'));
     const moving = x !== 0 || y !== 0;
     const running = moving && input.held.has('shift') && this.stamina > 1;
+    this.dizzyRemaining = Math.max(0, this.dizzyRemaining - delta);
+    const dizzy = this.dizzyRemaining > 0;
     const velocity = new Phaser.Math.Vector2(x, y).normalize();
     if (moving) this.facing.copy(velocity);
     this.player.setVelocity(velocity.x * (running ? 225 : 135), velocity.y * (running ? 225 : 135));
     this.player.setFlipX(this.facing.x < 0);
-    this.player.setAngle(moving ? Math.sin(time / (running ? 75 : 125)) * 4 : 0);
+    this.player.setAngle((moving ? Math.sin(time / (running ? 75 : 125)) * 4 : 0) + (dizzy ? Math.sin(time / 330) * 8 : 0));
     this.stamina = Phaser.Math.Clamp(this.stamina + (running ? -24 : 15) * delta / 1000, 0, 100);
     if (input.interact) { input.interact = false; this.interact(); }
     if (input.flashlight) { input.flashlight = false; this.flashlight = !this.flashlight; }
@@ -210,7 +217,7 @@ export class RescueScene extends Phaser.Scene {
     const hidden = !running && this.bushes.some((bush) => Phaser.Math.Distance.Between(this.player.x, this.player.y, bush.x, bush.y) < 52);
     this.beam.clear();
     if (this.flashlight) {
-      const angle = Math.atan2(this.facing.y, this.facing.x);
+      const angle = Math.atan2(this.facing.y, this.facing.x) + (dizzy ? Math.sin(time / 500) * 0.12 : 0);
       this.beam.fillStyle(0xffe7a9, 0.12).slice(this.player.x, this.player.y, 210, angle - 0.36, angle + 0.36, false).fillPath();
       this.beam.fillStyle(0xfff0c1, 0.06).fillCircle(this.player.x, this.player.y, 70);
     }
@@ -259,7 +266,7 @@ export class RescueScene extends Phaser.Scene {
     const nearby = Phaser.Math.Distance.Between(this.player.x, this.player.y, currentTarget.x, currentTarget.y) < 85;
     if (time > this.hudAt) {
       this.hudAt = time + 120;
-      this.bridge.onHud({ stage: this.stage, stamina: this.stamina, hearts: this.hearts, flashlight: this.flashlight, distractions: this.distractions, hidden, alert, prompt: nearby ? (this.stage === 5 ? 'לצאת יחד הביתה' : this.stage === 4 ? 'לקרוא לקרמבו בשקט' : 'לבדוק מקרוב') : '' });
+      this.bridge.onHud({ stage: this.stage, stamina: this.stamina, hearts: this.hearts, flashlight: this.flashlight, distractions: this.distractions, hidden, alert, dizzy, prompt: nearby ? (this.stage === 5 ? 'לצאת יחד הביתה' : this.stage === 4 ? 'לקרוא לקרמבו בשקט' : 'לבדוק מקרוב') : '' });
     }
   }
 
