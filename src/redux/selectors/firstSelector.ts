@@ -1,4 +1,4 @@
-import { IFirst, IFirstState } from 'Shared/interfaces/general/interface';
+import { IFirst, IFirstState } from '../../shared/interfaces/general/interface';
 import { RootState } from '../store';
 import { createSelector } from '@reduxjs/toolkit';
 
