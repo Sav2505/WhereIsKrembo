@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { IFirst, IFirstState } from 'Shared/interfaces/general/interface';
+import { IFirst, IFirstState } from '../../shared/interfaces/general/interface';
 
 const initialState: IFirstState = {
   firstList: [],
