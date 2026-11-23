@@ -47,11 +47,16 @@ try {
   await expect(page.getByText('המשחק בהשהיה')).toBeVisible();
   await page.getByRole('button', { name: 'ממשיכים' }).click();
   await expect(page.locator('.game-heading h2')).toHaveText('דברו עם השכנה');
-  console.log('Scene after help:', await page.locator('.game-canvas').evaluate((host) => {
+  await page.locator('.game-canvas').evaluate((host) => {
     const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
-    const game = host[key].return.memoizedState.next.memoizedState.current;
-    return { status: game.scene.getScene('rescue').sys.settings.status, size: [game.scale.width, game.scale.height] };
-  }));
+    const scene = host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue');
+    scene.hearts = 1;
+    scene.invulnerableUntil = 0;
+    scene.hyenas[0].sprite.setPosition(scene.player.x, scene.player.y);
+  });
+  await expect(page.getByText('הצבועים ניצחו בסיבוב הזה')).toBeVisible();
+  await page.getByRole('button', { name: 'נסו שוב מהמחסום' }).click();
+  await expect(page.locator('.game-heading h2')).toHaveText('דברו עם השכנה');
 
   for (const [x, y, next] of [[730, 310, 'מצאו את הצעצוע של קרמבו'], [1430, 440, 'בדקו את שקית החטיפים'], [2360, 460, 'מצאו את קרמבו'], [3200, 330, 'לוו את קרמבו הביתה']]) {
     await moveScene(x, y);
@@ -67,6 +72,15 @@ try {
   expect(await page.evaluate(() => localStorage.getItem('find-krembo-save-v1'))).toBeNull();
   await page.getByRole('button', { name: 'משחק חדש' }).click();
   await expect(page.locator('.game-heading h2')).toHaveText('חפשו רמז ליד הבית');
+  await moveScene(420, 540);
+  await page.keyboard.down('d');
+  await page.waitForTimeout(1800);
+  await page.keyboard.up('d');
+  const playerX = await page.locator('.game-canvas').evaluate((host) => {
+    const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
+    return host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue').player.x;
+  });
+  expect(playerX).toBeLessThan(500);
   await page.screenshot({ path: join(tmpdir(), 'krembo-desktop.png') });
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -74,7 +88,7 @@ try {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: join(tmpdir(), 'krembo-mobile.png') });
   expect(errors).toEqual([]);
-  console.log('Gameplay, controls, pause/help, checkpoints, victory, restart and mobile layout passed. Objective positions were set directly after the first clue.');
+  console.log('Gameplay, collision, controls, pause/help, checkpoints, victory, restart and mobile layout passed. Objective positions were set directly after the first clue.');
 } finally {
   await browser.close();
 }

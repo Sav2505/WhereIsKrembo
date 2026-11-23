@@ -84,7 +84,9 @@ export class RescueScene extends Phaser.Scene {
     this.showTarget();
     this.bridge.onDialogue('אורי', this.stage ? 'אוקיי, חזרנו לתוכנית. קרמבו, אני בדרך!' : 'קרמבו?! איפה אתה?! היין האדום והתרופות היו רעיון גרוע...');
     if (this.stage === 0) {
-      this.time.delayedCall(5000, () => this.bridge.onDialogue('אורי', 'הרופא אמר בלי יין. השכנה אמרה ימינה. נדמה לי שהשיח אמר שמאלה.'));
+      this.time.delayedCall(5000, () => {
+        if (this.stage === 0) this.bridge.onDialogue('אורי', 'הרופא אמר בלי יין. השכנה אמרה ימינה. נדמה לי שהשיח אמר שמאלה.');
+      });
     }
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.audio.destroy());
   }
