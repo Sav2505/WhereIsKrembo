@@ -58,24 +58,38 @@ try {
   await page.getByRole('button', { name: 'נסו שוב מהמחסום' }).click();
   await expect(page.locator('.game-heading h2')).toHaveText('דברו עם השכנה');
 
-  for (const [x, y, next] of [[730, 310, 'מצאו את הצעצוע של קרמבו'], [1430, 440, 'בדקו את שקית החטיפים'], [2360, 460, 'מצאו את קרמבו'], [3200, 330, 'לוו את קרמבו הביתה']]) {
+  for (const [x, y, next] of [[730, 310, 'מצאו את הצעצוע של קרמבו'], [1430, 440, 'בדקו את שקית החטיפים'], [2360, 460, 'מצאו את קרמבו'], [3430, 495, 'לוו את קרמבו הביתה']]) {
     if (next === 'לוו את קרמבו הביתה') {
-      await expect(page.locator('.mission')).toContainText('בשביל העליון בגינה');
-      const markerVisible = await page.locator('.game-canvas').evaluate((host) => {
+      await expect(page.locator('.mission')).toContainText('האירו עליהם עם הפנס');
+      await page.locator('.game-canvas').evaluate((host) => {
         const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
         const scene = host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue');
-        return scene.markerLabel.visible && scene.target.visible && scene.target.texture.key === 'dog';
+        scene.player.setPosition(3250, 495).setVelocity(0);
+        scene.facing.set(1, 0);
+        scene.flashlight = false;
       });
-      expect(markerVisible).toBe(true);
+      await page.waitForTimeout(150);
+      expect(await page.locator('.game-canvas').evaluate((host) => {
+        const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
+        return host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue').target.visible;
+      })).toBe(false);
+      await page.locator('.game-canvas').evaluate((host) => {
+        const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
+        host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue').flashlight = true;
+      });
+      await expect.poll(() => page.locator('.game-canvas').evaluate((host) => {
+        const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
+        return host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue').target.visible;
+      })).toBe(true);
     }
     await moveScene(x, y);
     await page.keyboard.press('e');
     await expect(page.locator('.game-heading h2')).toHaveText(next);
   }
-  await moveScene(3670, 350);
+  await moveScene(110, 230);
   await page.keyboard.press('e');
   await expect(page.getByText('קרמבו נמצא!!!')).toHaveCount(0);
-  await moveScene(3670, 350, true);
+  await moveScene(110, 230, true);
   await page.keyboard.press('e');
   await expect(page.getByText('קרמבו נמצא!!!')).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('find-krembo-save-v1'))).toBeNull();
@@ -106,6 +120,8 @@ try {
   await expect(right).toBeVisible();
   await right.scrollIntoViewIfNeeded();
   const bounds = await right.boundingBox();
+  const frameBounds = await mobile.locator('.game-frame').boundingBox();
+  expect(bounds.y).toBeGreaterThanOrEqual(frameBounds.y + frameBounds.height);
   const touch = await mobileContext.newCDPSession(mobile);
   const playerPosition = () => mobile.locator('.game-canvas').evaluate((host) => {
     const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
@@ -126,7 +142,7 @@ try {
   await mobile.getByRole('button', { name: 'פנס' }).tap();
   await expect(mobile.locator('.control-strip')).toContainText('פנס כבוי');
   await mobile.getByRole('button', { name: 'הסחת דעת' }).tap();
-  await expect(mobile.locator('.compact-stat').last()).toContainText('2 / 3');
+  await expect(mobile.locator('.compact-stat').last()).toContainText('7 / 8');
   await mobile.getByRole('button', { name: 'השהיה' }).tap();
   await expect(mobile.getByText('המשחק בהשהיה')).toBeVisible();
   await mobile.getByRole('button', { name: 'ממשיכים' }).tap();

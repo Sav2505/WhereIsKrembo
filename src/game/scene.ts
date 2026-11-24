@@ -11,8 +11,8 @@ const TARGETS = [
   { x: 730, y: 310, texture: 'neighbor' },
   { x: 1430, y: 440, texture: 'ball' },
   { x: 2360, y: 460, texture: 'snack' },
-  { x: 3200, y: 330, texture: 'dog' },
-  { x: 3670, y: 350, texture: 'clue' },
+  { x: 3430, y: 495, texture: 'dog' },
+  { x: 110, y: 230, texture: 'clue' },
 ];
 
 interface Hyena {
@@ -71,11 +71,12 @@ export class RescueScene extends Phaser.Scene {
     this.physics.add.collider(this.player, this.obstacles);
     this.dog = this.physics.add.sprite(0, 0, 'dog').setDepth(9).setVisible(false).setActive(false);
     this.dog.body!.enable = false;
+    if (this.stage === 5) this.startFollowingDog();
     this.target = this.add.image(0, 0, 'clue').setDepth(5);
     this.marker = this.add.circle(0, 0, 24, 0xffd778, 0.13).setStrokeStyle(2, 0xffd778, 0.9).setDepth(4);
     this.tweens.add({ targets: this.marker, scale: 1.25, alpha: 0.45, duration: 750, yoyo: true, repeat: -1 });
-    this.markerLabel = this.add.text(0, 0, 'קרמבו כאן! לחצו E', {
-      fontFamily: 'Arial', fontSize: '19px', color: '#ffe49a', fontStyle: 'bold',
+    this.markerLabel = this.add.text(0, 0, 'רשרוש בין השיחים...', {
+      fontFamily: 'Arial', fontSize: '16px', color: '#ffe49a', fontStyle: 'bold',
       stroke: '#18332f', strokeThickness: 5, backgroundColor: '#18332fdd', padding: { x: 10, y: 6 },
     }).setOrigin(0.5).setDepth(12).setVisible(false);
     this.beam = this.add.graphics().setDepth(8);
@@ -115,14 +116,23 @@ export class RescueScene extends Phaser.Scene {
       g.fillStyle(0x3e775e).fillCircle(x - 30, y, 26).fillCircle(x, y - 8, 31).fillCircle(x + 30, y, 25);
       g.fillStyle(0x65a17b).fillCircle(x - 12, y - 14, 14).fillCircle(x + 24, y - 7, 11);
     });
-    g.fillStyle(0xd6aa65).fillRoundedRect(3600, 245, 12, 125, 3).fillRoundedRect(3750, 245, 12, 125, 3);
-    g.lineStyle(6, 0xe9c786).lineBetween(3606, 245, 3756, 245);
-    g.fillStyle(0xffda83, 0.12).fillCircle(3678, 340, 82);
+    const gardenCover = this.add.graphics().setDepth(6);
+    gardenCover.fillStyle(0x24513e).fillCircle(3407, 507, 17).fillCircle(3428, 514, 18).fillCircle(3449, 506, 15);
+    gardenCover.fillStyle(0x65a17b).fillCircle(3415, 498, 9).fillCircle(3435, 502, 10).fillCircle(3450, 496, 8);
+    g.fillStyle(0xffda83, 0.12).fillCircle(110, 220, 78);
+    g.fillStyle(0xf6d391).fillRoundedRect(88, 193, 44, 8, 4);
     g.fillStyle(0xf6d391).fillRoundedRect(155, 275, 116, 35, 5);
     g.fillStyle(0x3a625d).fillRoundedRect(162, 282, 102, 21, 3);
-    this.add.text(213, 293, 'מודיעין', { fontFamily: 'Arial', fontSize: '15px', color: '#f8eaca' }).setOrigin(0.5).setDepth(3);
+    this.add.text(213, 293, 'הבית', { fontFamily: 'Arial', fontSize: '15px', color: '#f8eaca' }).setOrigin(0.5).setDepth(3);
     this.add.text(1220, 200, 'PARK', { fontFamily: 'Arial', fontSize: '17px', color: '#d3dcbe', fontStyle: 'bold' }).setDepth(3);
     this.add.text(2420, 200, 'P', { fontFamily: 'Arial', fontSize: '20px', color: '#d3dcbe', fontStyle: 'bold' }).setDepth(3);
+  }
+
+  private startFollowingDog() {
+    const hidingSpot = TARGETS[4];
+    this.dog.setPosition(hidingSpot.x, hidingSpot.y + 35).setVisible(true).setActive(true);
+    this.dog.body!.enable = true;
+    this.physics.add.collider(this.dog, this.obstacles);
   }
 
   private addObstacle(x: number, y: number, width: number, height: number) {
@@ -140,15 +150,32 @@ export class RescueScene extends Phaser.Scene {
 
   private showTarget() {
     const target = TARGETS[this.stage];
-    this.target.setPosition(target.x, target.y).setTexture(target.texture).setVisible(this.stage !== 5);
-    this.marker.setPosition(target.x, target.y).setVisible(true);
-    this.markerLabel.setPosition(target.x, target.y - 58).setVisible(this.stage === 4);
+    this.target.setPosition(target.x, target.y).setTexture(target.texture).setDepth(5).setVisible(this.stage < 4);
+    this.marker.setPosition(target.x, target.y).setAlpha(1).setVisible(this.stage !== 4);
+    this.markerLabel.setText(this.stage === 5 ? 'הביתה!' : 'רשרוש בין השיחים...').setPosition(target.x, target.y - 58).setVisible(this.stage === 5);
+  }
+
+  private isInFlashlight(x: number, y: number) {
+    if (!this.flashlight) return false;
+    const offsetX = x - this.player.x;
+    const offsetY = y - this.player.y;
+    const distance = Math.hypot(offsetX, offsetY);
+    if (distance <= 70) return true;
+    if (distance > 210) return false;
+    const targetAngle = Math.atan2(offsetY, offsetX);
+    const facingAngle = Math.atan2(this.facing.y, this.facing.x);
+    const angleDifference = Math.atan2(Math.sin(targetAngle - facingAngle), Math.cos(targetAngle - facingAngle));
+    return Math.abs(angleDifference) <= 0.36;
   }
 
   private interact() {
     const target = TARGETS[this.stage];
     if (Phaser.Math.Distance.Between(this.player.x, this.player.y, target.x, target.y) > 85) {
       this.bridge.onDialogue('אורי', 'צריך להתקרב קצת. העיניים שלי לא מה שהיו פעם.');
+      return;
+    }
+    if (this.stage === 4 && !this.isInFlashlight(target.x, target.y)) {
+      this.bridge.onDialogue('אורי', 'משהו זז מאחורי השיח. צריך להאיר עליו עם הפנס.');
       return;
     }
     if (this.stage === 5) {
@@ -161,18 +188,13 @@ export class RescueScene extends Phaser.Scene {
       this.bridge.onVictory();
       return;
     }
-    if (this.stage === 4 && this.bridge.input.held.has('shift')) {
-      this.bridge.onDialogue('אורי', 'בשקט... הוא ייבהל אם ארוץ אליו.');
-      return;
-    }
     const previous = this.stage;
     this.audio.play(previous === 4 ? 'bark' : 'clue');
     this.bridge.onDialogue(previous === 1 ? 'השכנה' : previous === 4 ? 'קרמבו' : 'אורי', previous === 4 ? 'הב! הב! (מצאתי אותך, אבא!)' : OBJECTIVES[previous].dialogue);
     this.stage++;
     if (this.stage === 5) {
-      this.dog.setPosition(target.x, target.y + 35).setVisible(true).setActive(true);
-      this.dog.body!.enable = true;
-      this.physics.add.collider(this.dog, this.obstacles);
+      this.startFollowingDog();
+      this.bridge.onCheckpoint(this.stage);
     } else {
       this.bridge.onCheckpoint(this.stage);
     }
@@ -217,8 +239,8 @@ export class RescueScene extends Phaser.Scene {
     this.player.setFlipX(this.facing.x < 0);
     this.player.setAngle((moving ? Math.sin(time / (running ? 75 : 125)) * 4 : 0) + (dizzy ? Math.sin(time / 330) * 8 : 0));
     this.stamina = Phaser.Math.Clamp(this.stamina + (running ? -24 : 15) * delta / 1000, 0, 100);
-    if (input.interact) { input.interact = false; this.interact(); }
     if (input.flashlight) { input.flashlight = false; this.flashlight = !this.flashlight; }
+    if (input.interact) { input.interact = false; this.interact(); }
     if (input.distract) { input.distract = false; this.throwDistraction(time); }
     const hidden = !running && this.bushes.some((bush) => Phaser.Math.Distance.Between(this.player.x, this.player.y, bush.x, bush.y) < 52);
     this.beam.clear();
@@ -269,10 +291,14 @@ export class RescueScene extends Phaser.Scene {
     }
     this.player.setAlpha(time < this.invulnerableUntil && Math.floor(time / 120) % 2 ? 0.45 : 1);
     const currentTarget = TARGETS[this.stage];
-    const nearby = Phaser.Math.Distance.Between(this.player.x, this.player.y, currentTarget.x, currentTarget.y) < 85;
+    const targetDistance = Phaser.Math.Distance.Between(this.player.x, this.player.y, currentTarget.x, currentTarget.y);
+    const nearby = targetDistance < 85;
+    const targetLit = this.stage === 4 && this.isInFlashlight(currentTarget.x, currentTarget.y);
+    this.target.setVisible(this.stage < 4 || targetLit);
+    this.markerLabel.setVisible(this.stage === 5 || (this.stage === 4 && targetDistance < 240 && !targetLit));
     if (time > this.hudAt) {
       this.hudAt = time + 120;
-      this.bridge.onHud({ stage: this.stage, stamina: this.stamina, hearts: this.hearts, flashlight: this.flashlight, distractions: this.distractions, hidden, alert, dizzy, prompt: nearby ? (this.stage === 5 ? 'לצאת יחד הביתה' : this.stage === 4 ? 'לקרוא לקרמבו בשקט' : 'לבדוק מקרוב') : '' });
+      this.bridge.onHud({ stage: this.stage, stamina: this.stamina, hearts: this.hearts, flashlight: this.flashlight, distractions: this.distractions, hidden, alert, dizzy, prompt: nearby ? (this.stage === 5 ? 'להיכנס הביתה' : this.stage === 4 ? 'לקרוא לקרמבו בשקט' : 'לבדוק מקרוב') : '' });
     }
   }
 
