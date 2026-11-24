@@ -39,7 +39,7 @@ try {
   await page.keyboard.press('f');
   await page.keyboard.press('Space');
   await expect(page.locator('.control-strip')).toContainText('פנס כבוי');
-  await expect(page.locator('.compact-stat').last()).toContainText('2 / 3');
+  await expect(page.locator('.compact-stat').last()).toContainText('7 / 8');
   await page.keyboard.press('Escape');
   await expect(page.getByText('המשחק בהשהיה')).toBeVisible();
   await page.getByRole('button', { name: 'איך משחקים?' }).click();
@@ -59,6 +59,15 @@ try {
   await expect(page.locator('.game-heading h2')).toHaveText('דברו עם השכנה');
 
   for (const [x, y, next] of [[730, 310, 'מצאו את הצעצוע של קרמבו'], [1430, 440, 'בדקו את שקית החטיפים'], [2360, 460, 'מצאו את קרמבו'], [3200, 330, 'לוו את קרמבו הביתה']]) {
+    if (next === 'לוו את קרמבו הביתה') {
+      await expect(page.locator('.mission')).toContainText('הסימון המהבהב');
+      const markerVisible = await page.locator('.game-canvas').evaluate((host) => {
+        const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
+        const scene = host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue');
+        return scene.markerLabel.visible && scene.target.visible && scene.target.texture.key === 'dog';
+      });
+      expect(markerVisible).toBe(true);
+    }
     await moveScene(x, y);
     await page.keyboard.press('e');
     await expect(page.locator('.game-heading h2')).toHaveText(next);

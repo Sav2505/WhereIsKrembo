@@ -8,7 +8,7 @@ import './App.css';
 
 type Screen = 'menu' | 'story' | 'help' | 'playing' | 'paused' | 'failed' | 'won';
 
-const emptyHud: HudState = { stage: 0, stamina: 100, hearts: 3, flashlight: true, distractions: 3, hidden: false, alert: false, dizzy: false, prompt: '' };
+const emptyHud: HudState = { stage: 0, stamina: 100, hearts: 3, flashlight: true, distractions: 8, hidden: false, alert: false, dizzy: false, prompt: '' };
 
 function storageGet(key: string) {
   try { return localStorage.getItem(key); } catch { return null; }
@@ -69,7 +69,7 @@ function TouchControls({ input }: { input: GameInput }) {
     <div className="touch-actions">
       <button aria-label="ריצה" title="ריצה" {...hold('shift')}><Zap /></button>
       <button aria-label="פנס" title="פנס" onPointerDown={() => { input.flashlight = true; }}><Flashlight /></button>
-      <button aria-label="הסחת דעת" title="הסחת דעת" onPointerDown={() => { input.distract = true; }}><AudioLines /></button>
+      <button aria-label="זריקת חטיף" title="זריקת חטיף" onPointerDown={() => { input.distract = true; }}><AudioLines /></button>
       <button className="touch-interact" aria-label="פעולה" title="פעולה" onPointerDown={() => { input.interact = true; }}><Sparkles /></button>
     </div>
   </div>;
@@ -191,7 +191,7 @@ export const App = () => {
         <div className="help-grid">
           <div><kbd>W A S D</kbd><b>או חצים</b><span>תנועה ברחובות</span></div><div><kbd>SHIFT</kbd><b>ריצה</b><span>מהירה, רועשת ומעייפת</span></div>
           <div><kbd>E</kbd><b>פעולה</b><span>בדיקת רמזים ושיחה</span></div><div><kbd>F</kbd><b>פנס</b><span>מאיר, אבל גם מושך תשומת לב</span></div>
-          <div><kbd>SPACE</kbd><b>הסחת דעת</b><span>זריקה לכיוון ההליכה</span></div><div><kbd>ESC</kbd><b>השהיה</b><span>כי גם לאבא מותר לנוח</span></div>
+          <div><kbd>SPACE</kbd><b>זריקת חטיף</b><span>הצבועים רצים לבדוק אותו ומשאירים את הדרך פנויה</span></div><div><kbd>ESC</kbd><b>השהיה</b><span>כי גם לאבא מותר לנוח</span></div>
         </div>
         <div className="help-tip"><span>טיפ של אבא</span> שיחים מסתירים את אורי בהליכה. ריצה רועשת תסגיר אותו. כשמוצאים את קרמבו, מתקרבים בשקט ומלווים אותו לשער.</div>
         <button className="primary-button" onClick={() => setScreen(returnScreen)}><ArrowRight size={19} /> הבנתי, חזרה למשחק</button>
@@ -216,10 +216,10 @@ export const App = () => {
         <div className="stats"><div className="stat"><span className="small-label">מצב רוח של אבא</span><div className="hearts" aria-label={`${hud.hearts} מתוך 3 לבבות`}>{[0, 1, 2].map((heart) => <Heart key={heart} size={19} fill={heart < hud.hearts ? 'currentColor' : 'none'} className={heart < hud.hearts ? '' : 'empty-heart'} />)}</div></div>
           <div className="stat stamina-stat"><span className="small-label">כוח לרוץ</span><div className="stamina-track"><span style={{ width: `${hud.stamina}%` }} /></div></div>
           <div className="stat compact-stat"><span className="small-label">רמזים</span><strong>{Math.min(hud.stage, 5)}<small> / 5</small></strong></div>
-          <div className="stat compact-stat"><span className="small-label">הסחות</span><strong>{hud.distractions}<small> / 3</small></strong></div>
+          <div className="stat compact-stat"><span className="small-label">חטיפים לזריקה</span><strong>{hud.distractions}<small> / 8</small></strong></div>
         </div>
       </div>
-      <div className="control-strip"><span><kbd>WASD</kbd> תנועה</span><span><kbd>SHIFT</kbd> ריצה</span><span><kbd>E</kbd> פעולה</span><span><kbd>F</kbd> פנס {hud.flashlight ? 'דלוק' : 'כבוי'}</span><span><kbd>SPACE</kbd> הסחת דעת</span><button onClick={() => showHelp('paused')}><HelpCircle size={16} /> עזרה</button></div>
+      <div className="control-strip"><span><kbd>WASD</kbd> תנועה</span><span><kbd>SHIFT</kbd> ריצה</span><span><kbd>E</kbd> פעולה</span><span><kbd>F</kbd> פנס {hud.flashlight ? 'דלוק' : 'כבוי'}</span><span><kbd>SPACE</kbd> זריקת חטיף</span><button onClick={() => showHelp('paused')}><HelpCircle size={16} /> עזרה</button></div>
     </section>}
     <footer className="app-footer"><span>משחק קטן על אהבה גדולה לכלב קטן</span><span>MADE IN MODI'IN (בערך)</span></footer>
   </main>;

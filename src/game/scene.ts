@@ -33,6 +33,7 @@ export class RescueScene extends Phaser.Scene {
   private dog!: Phaser.Physics.Arcade.Sprite;
   private target!: Phaser.GameObjects.Image;
   private marker!: Phaser.GameObjects.Arc;
+  private markerLabel!: Phaser.GameObjects.Text;
   private beam!: Phaser.GameObjects.Graphics;
   private obstacles!: Phaser.Physics.Arcade.StaticGroup;
   private hyenas: Hyena[] = [];
@@ -41,7 +42,7 @@ export class RescueScene extends Phaser.Scene {
   private hearts = 3;
   private stamina = 100;
   private flashlight = true;
-  private distractions = 3;
+  private distractions = 8;
   private facing = new Phaser.Math.Vector2(1, 0);
   private invulnerableUntil = 0;
   private hudAt = 0;
@@ -73,6 +74,10 @@ export class RescueScene extends Phaser.Scene {
     this.target = this.add.image(0, 0, 'clue').setDepth(5);
     this.marker = this.add.circle(0, 0, 24, 0xffd778, 0.13).setStrokeStyle(2, 0xffd778, 0.9).setDepth(4);
     this.tweens.add({ targets: this.marker, scale: 1.25, alpha: 0.45, duration: 750, yoyo: true, repeat: -1 });
+    this.markerLabel = this.add.text(0, 0, 'קרמבו כאן! לחצו E', {
+      fontFamily: 'Arial', fontSize: '19px', color: '#ffe49a', fontStyle: 'bold',
+      stroke: '#18332f', strokeThickness: 5, backgroundColor: '#18332fdd', padding: { x: 10, y: 6 },
+    }).setOrigin(0.5).setDepth(12).setVisible(false);
     this.beam = this.add.graphics().setDepth(8);
     this.createHyena(1540, 315, 62);
     this.createHyena(2200, 380, 85);
@@ -138,7 +143,7 @@ export class RescueScene extends Phaser.Scene {
     const target = TARGETS[this.stage];
     this.target.setPosition(target.x, target.y).setTexture(target.texture).setVisible(this.stage !== 5);
     this.marker.setPosition(target.x, target.y).setVisible(true);
-    if (this.stage === 4) this.target.setVisible(false);
+    this.markerLabel.setPosition(target.x, target.y - 58).setVisible(this.stage === 4);
   }
 
   private interact() {
@@ -177,7 +182,7 @@ export class RescueScene extends Phaser.Scene {
 
   private throwDistraction(time: number) {
     if (this.distractions <= 0) {
-      this.bridge.onDialogue('אורי', 'נגמרו לי הרשרשנים. הגיע הזמן להיות בשקט.');
+      this.bridge.onDialogue('אורי', 'נגמרו החטיפים. עכשיו צריך להתחמק מהצבועים בלי הסחה.');
       return;
     }
     this.distractions--;
@@ -194,7 +199,7 @@ export class RescueScene extends Phaser.Scene {
         hyena.until = time + 4000;
       }
     });
-    this.bridge.onDialogue('אורי', 'לך תבדוק את זה. זה בטח משהו ממש טעים.');
+    this.bridge.onDialogue('אורי', 'הצבועים רצים לבדוק את החטיף. עכשיו אפשר לעבור!');
   }
 
   update(time: number, delta: number) {
