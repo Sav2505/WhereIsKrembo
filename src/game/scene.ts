@@ -82,7 +82,6 @@ export class RescueScene extends Phaser.Scene {
     this.createHyena(1540, 315, 62);
     this.createHyena(2200, 380, 85);
     this.createHyena(2680, 330, 72);
-    this.createHyena(3360, 430, 80);
     this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
     this.cameras.main.setBackgroundColor('#203b49');

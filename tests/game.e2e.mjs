@@ -60,7 +60,7 @@ try {
 
   for (const [x, y, next] of [[730, 310, 'מצאו את הצעצוע של קרמבו'], [1430, 440, 'בדקו את שקית החטיפים'], [2360, 460, 'מצאו את קרמבו'], [3200, 330, 'לוו את קרמבו הביתה']]) {
     if (next === 'לוו את קרמבו הביתה') {
-      await expect(page.locator('.mission')).toContainText('הסימון המהבהב');
+      await expect(page.locator('.mission')).toContainText('בשביל העליון בגינה');
       const markerVisible = await page.locator('.game-canvas').evaluate((host) => {
         const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
         const scene = host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue');
