@@ -96,8 +96,62 @@ try {
   await expect(page.getByRole('button', { name: 'למעלה' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: join(tmpdir(), 'krembo-mobile.png') });
+
+  const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+  const mobile = await mobileContext.newPage();
+  await mobile.goto('http://127.0.0.1:5173/');
+  await mobile.getByRole('button', { name: 'התחל משחק' }).tap();
+  await mobile.getByRole('button', { name: 'יוצאים לחפש' }).tap();
+  const right = mobile.getByRole('button', { name: 'ימינה' });
+  await expect(right).toBeVisible();
+  await right.scrollIntoViewIfNeeded();
+  const bounds = await right.boundingBox();
+  const touch = await mobileContext.newCDPSession(mobile);
+  const playerPosition = () => mobile.locator('.game-canvas').evaluate((host) => {
+    const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
+    return host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue').player.x;
+  });
+  const startX = await playerPosition();
+  const scrollY = await mobile.evaluate(() => window.scrollY);
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 }] });
+  await mobile.waitForTimeout(1200);
+  await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  const endX = await playerPosition();
+  expect(endX).toBeGreaterThan(startX + 30);
+  await mobile.waitForTimeout(300);
+  expect(await playerPosition()).toBeCloseTo(endX, 0);
+  expect(await mobile.evaluate(() => ({ selection: window.getSelection().toString(), scroll: window.scrollY }))).toEqual({ selection: '', scroll: scrollY });
+  expect(await right.evaluate((button) => getComputedStyle(button).userSelect)).toBe('none');
+  expect(await right.evaluate((button) => button.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })))).toBe(false);
+  await mobile.getByRole('button', { name: 'פנס' }).tap();
+  await expect(mobile.locator('.control-strip')).toContainText('פנס כבוי');
+  await mobile.getByRole('button', { name: 'הסחת דעת' }).tap();
+  await expect(mobile.locator('.compact-stat').last()).toContainText('2 / 3');
+  await mobile.getByRole('button', { name: 'השהיה' }).tap();
+  await expect(mobile.getByText('המשחק בהשהיה')).toBeVisible();
+  await mobile.getByRole('button', { name: 'ממשיכים' }).tap();
+
+  await mobile.locator('.game-canvas').evaluate((host) => {
+    const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
+    host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue').player.setPosition(360, 460).setVelocity(0);
+  });
+  const mobilePrompt = mobile.getByRole('button', { name: 'לבדוק מקרוב' }).filter({ has: mobile.locator('svg') });
+  await expect(mobile.locator('.touch-prompt')).toBeVisible();
+  await expect(mobile.locator('.keyboard-prompt')).toBeHidden();
+  await expect(mobilePrompt).toHaveCount(2);
+  await mobile.screenshot({ path: join(tmpdir(), 'krembo-touch-prompt.png') });
+  await mobile.locator('.touch-prompt').tap();
+  await expect(mobile.locator('.game-heading h2')).toHaveText('דברו עם השכנה');
+  await mobile.locator('.game-canvas').evaluate((host) => {
+    const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
+    host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue').player.setPosition(730, 310).setVelocity(0);
+  });
+  await expect(mobile.locator('.touch-interact')).toHaveAttribute('aria-label', 'לבדוק מקרוב');
+  await mobile.locator('.touch-interact').tap();
+  await expect(mobile.locator('.game-heading h2')).toHaveText('מצאו את הצעצוע של קרמבו');
+  await mobileContext.close();
   expect(errors).toEqual([]);
-  console.log('Gameplay, collision, controls, pause/help, checkpoints, victory, restart and mobile layout passed. Objective positions were set directly after the first clue.');
+  console.log('Gameplay, collision, controls, pause/help, checkpoints, victory, restart and mobile touch controls passed. Objective positions were set directly after the first clue.');
 } finally {
   await browser.close();
 }
