@@ -81,6 +81,10 @@ try {
         const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
         return host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue').target.visible;
       })).toBe(true);
+      expect(await page.locator('.game-canvas').evaluate((host) => {
+        const key = Object.keys(host).find((name) => name.startsWith('__reactFiber'));
+        return host[key].return.memoizedState.next.memoizedState.current.scene.getScene('rescue').gardenCover.visible;
+      })).toBe(false);
     }
     await moveScene(x, y);
     await page.keyboard.press('e');

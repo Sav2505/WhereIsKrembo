@@ -34,6 +34,7 @@ export class RescueScene extends Phaser.Scene {
   private target!: Phaser.GameObjects.Image;
   private marker!: Phaser.GameObjects.Arc;
   private markerLabel!: Phaser.GameObjects.Text;
+  private gardenCover!: Phaser.GameObjects.Graphics;
   private beam!: Phaser.GameObjects.Graphics;
   private obstacles!: Phaser.Physics.Arcade.StaticGroup;
   private hyenas: Hyena[] = [];
@@ -116,9 +117,9 @@ export class RescueScene extends Phaser.Scene {
       g.fillStyle(0x3e775e).fillCircle(x - 30, y, 26).fillCircle(x, y - 8, 31).fillCircle(x + 30, y, 25);
       g.fillStyle(0x65a17b).fillCircle(x - 12, y - 14, 14).fillCircle(x + 24, y - 7, 11);
     });
-    const gardenCover = this.add.graphics().setDepth(6);
-    gardenCover.fillStyle(0x24513e).fillCircle(3407, 507, 17).fillCircle(3428, 514, 18).fillCircle(3449, 506, 15);
-    gardenCover.fillStyle(0x65a17b).fillCircle(3415, 498, 9).fillCircle(3435, 502, 10).fillCircle(3450, 496, 8);
+    this.gardenCover = this.add.graphics().setDepth(6);
+    this.gardenCover.fillStyle(0x24513e).fillCircle(3407, 507, 17).fillCircle(3428, 514, 18).fillCircle(3449, 506, 15);
+    this.gardenCover.fillStyle(0x65a17b).fillCircle(3415, 498, 9).fillCircle(3435, 502, 10).fillCircle(3450, 496, 8);
     g.fillStyle(0xffda83, 0.12).fillCircle(110, 220, 78);
     g.fillStyle(0xf6d391).fillRoundedRect(88, 193, 44, 8, 4);
     g.fillStyle(0xf6d391).fillRoundedRect(155, 275, 116, 35, 5);
@@ -295,6 +296,7 @@ export class RescueScene extends Phaser.Scene {
     const nearby = targetDistance < 85;
     const targetLit = this.stage === 4 && this.isInFlashlight(currentTarget.x, currentTarget.y);
     this.target.setVisible(this.stage < 4 || targetLit);
+    this.gardenCover.setVisible(!targetLit);
     this.markerLabel.setVisible(this.stage === 5 || (this.stage === 4 && targetDistance < 240 && !targetLit));
     if (time > this.hudAt) {
       this.hudAt = time + 120;
